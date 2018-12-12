@@ -12,3 +12,4 @@ docker run \
   --volume ~/.ssh:/root/.ssh \
   --entrypoint /bin/zsh \
   ${CONTAINER_NAME}
+  
