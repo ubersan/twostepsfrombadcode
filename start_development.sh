@@ -10,5 +10,5 @@ docker run \
   --volume ${PWD}:/usr/src/twostepsfromcode \
   --volume ~/.gitconfig:/etc/gitconfig \
   --volume ~/.ssh:/root/.ssh \
-  --entrypoint /bin/zsh \
+  -p 4000:4000 \
   ${CONTAINER_NAME}

@@ -17,7 +17,25 @@ RUN set -xe \
 	&& cd /usr/local/src/elixir \
 	&& make install clean
 
+RUN mix local.hex --force
+
+RUN mix archive.install hex phx_new 1.4.0 --force
+
 RUN apt-get update \
   && apt-get install -y zsh
 
 RUN wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh || true
+
+RUN apt-get install -y postgresql postgresql-client
+
+RUN apt-get install -y inotify-tools
+
+RUN apt-get install -y curl sudo
+
+RUN curl -sL https://deb.nodesource.com/setup_10.x | sudo bash -
+
+RUN apt-get install -y nodejs
+
+RUN apt-get install -y nano
+
+CMD ./wrapper_script.sh
