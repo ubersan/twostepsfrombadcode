@@ -11,3 +11,4 @@ docker run \
   --volume ~/.gitconfig:/etc/gitconfig \
   --entrypoint /bin/zsh \
   ${CONTAINER_NAME}
+  
