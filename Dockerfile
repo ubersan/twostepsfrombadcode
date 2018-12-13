@@ -19,7 +19,6 @@ RUN set -xe \
 
 RUN apt-get update \
   && apt-get install -y zsh \
-	&& apt-get install -y postgresql postgresql-client \
 	&& apt-get install -y inotify-tools \
 	&& apt-get install -y sudo \
 	&& apt-get install -y nano
@@ -28,7 +27,8 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | sudo bash - \
 	&& apt-get install -y nodejs
 
 RUN mix local.hex --force \
-	&& mix archive.install hex phx_new 1.4.0 --force
+	&& mix archive.install hex phx_new 1.4.0 --force \
+	&& mix local.rebar --force
 
 RUN wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh || true
 
