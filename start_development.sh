@@ -1,4 +1,6 @@
-CONTAINER_NAME=dev-container
+#!/bin/sh
+
+CONTAINER_NAME=tsfbc-dev-container
 
 docker build \
   . \
@@ -6,9 +8,9 @@ docker build \
 
 docker run \
   -it \
-  -w /usr/src/twostepsfromcode \
-  --volume ${PWD}:/usr/src/twostepsfromcode \
+  -p 4000:4000 \
   --volume ~/.gitconfig:/etc/gitconfig \
   --volume ~/.ssh:/root/.ssh \
-  -p 4000:4000 \
+  --volume ${PWD}:${PWD} \
+  --workdir ${PWD} \
   ${CONTAINER_NAME}
