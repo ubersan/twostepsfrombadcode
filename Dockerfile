@@ -34,4 +34,4 @@ RUN wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -
 
 RUN wget https://github.com/elm/compiler/releases/download/0.19.0/binaries-for-linux.tar.gz -qO - | tar -zxC /usr/local/bin
 
-CMD ["/bin/zsh"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
