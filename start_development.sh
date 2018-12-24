@@ -8,7 +8,8 @@ docker build \
 
 docker run \
   -it \
-  -p 4000:4000 \
+  --rm \
+  --publish 4000:4000 \
   --volume ~/.gitconfig:/etc/gitconfig \
   --volume ~/.ssh:/root/.ssh \
   --volume ${PWD}:${PWD} \
