@@ -10,7 +10,7 @@ docker run \
   -it \
   --rm \
   --publish 4000:4000 \
-  --volume ~/.gitconfig:/etc/gitconfig \
+  --volume ~/.gitconfig:/etc/.gitconfig \
   --volume ~/.ssh:/root/.ssh \
   --volume ${PWD}:${PWD} \
   --workdir ${PWD} \
