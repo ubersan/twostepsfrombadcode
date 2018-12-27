@@ -12,23 +12,28 @@ type alias Color =
   , b: Int
   }
 
-type alias Model = Color
+type alias Model = 
+  { color: Color
+  , text: String
+  }
 
 type Msg =
-  MouseClicked
+  MouseMoved Mouse.Event
 
 
 init : () -> (Model, Cmd Msg)
 init _ =
-  ({r=100, b=100, g=100}
+  ({ color={r=100, b=100, g=100}
+  , text="test text"
+  }
   , Cmd.none
   )
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    MouseClicked ->
-      ( model, Cmd.none )
+    MouseMoved event ->
+      ( { model | text = Debug.toString event }, Cmd.none )
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -36,7 +41,11 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-  div [ style "background-color" "red" ] [text "Hello from elm"]
+  div
+    [ style "background-color" "red"
+    , Mouse.onMove MouseMoved
+    ]
+    [ text model.text ]
 
 main : Program () Model Msg
 main =
