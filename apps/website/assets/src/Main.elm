@@ -2,8 +2,9 @@ module Main exposing (main)
 
 import Browser
 
-import Html exposing (Html, div, text)
-import Html.Events exposing (onClick)
+import Html exposing (Html, div, text, button)
+import Html.Attributes exposing (style)
+import Html.Events.Extra.Mouse as Mouse
 
 type alias Color =
   { r: Int
@@ -35,7 +36,7 @@ subscriptions model =
 
 view : Model -> Html Msg
 view model =
-  div [] [text "Hello from elm"]
+  div [ style "background-color" "red" ] [text "Hello from elm"]
 
 main : Program () Model Msg
 main =
