@@ -1,10 +1,14 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Dom exposing (getViewport)
+import Browser.Events exposing (onResize)
 
 import Html exposing (Html, div, text, button)
 import Html.Attributes exposing (style)
 import Html.Events.Extra.Mouse as Mouse
+
+import Task
 
 type alias Color =
   { r: Int
@@ -15,18 +19,23 @@ type alias Color =
 type alias Model = 
   { color: Color
   , text: String
+  , screenWidth : Float
+  , screenHeight : Float
   }
 
-type Msg =
-  MouseMoved Mouse.Event
+type Msg
+  = MouseMoved Mouse.Event
+  | Resize Float Float
 
 
 init : () -> (Model, Cmd Msg)
 init _ =
   ({ color={r=100, b=100, g=100}
   , text="test text"
+  , screenWidth = 1
+  , screenHeight = 1
   }
-  , Cmd.none
+  , Task.perform (\{ viewport } -> Resize viewport.width viewport.height) getViewport
   )
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -35,9 +44,20 @@ update msg model =
     MouseMoved event ->
       ( { model | text = Debug.toString event }, Cmd.none )
 
+    Resize width height ->
+      ( { model
+          | screenWidth = width
+          , screenHeight = height
+        }
+      , Cmd.none
+      )
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+  Sub.batch
+    [ Sub.none
+    , onResize (\w h -> Resize (toFloat w) (toFloat h))
+    ]
 
 view : Model -> Html Msg
 view model =
@@ -45,7 +65,10 @@ view model =
     [ style "background-color" "red"
     , Mouse.onMove MouseMoved
     ]
-    [ text model.text ]
+    [ div [] [ text model.text ]
+    , div [] [ text <| Debug.toString model.screenWidth ]
+    , div [] [ text <| Debug.toString model.screenHeight ]
+    ]
 
 main : Program () Model Msg
 main =
