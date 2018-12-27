@@ -21,6 +21,8 @@ type alias Model =
   , text: String
   , screenWidth : Float
   , screenHeight : Float
+  , mouseXPos : Float
+  , mouseYPos : Float
   }
 
 type Msg
@@ -34,6 +36,8 @@ init _ =
   , text="test text"
   , screenWidth = 1
   , screenHeight = 1
+  , mouseXPos = 1
+  , mouseYPos = 1
   }
   , Task.perform (\{ viewport } -> Resize viewport.width viewport.height) getViewport
   )
@@ -42,7 +46,13 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     MouseMoved event ->
-      ( { model | text = Debug.toString event }, Cmd.none )
+      ( { model
+          | text = Debug.toString event
+          , mouseXPos = Tuple.first event.offsetPos
+          , mouseYPos = Tuple.second event.offsetPos
+        }
+      , Cmd.none
+      )
 
     Resize width height ->
       ( { model
@@ -62,12 +72,22 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
   div
-    [ style "background-color" "red"
+    [ style "background-color" (
+        "rgb("
+          ++ (Debug.toString (model.mouseXPos / model.screenWidth * 255.0))
+          ++ ", 255, "
+          ++ (Debug.toString (model.mouseYPos / model.screenHeight * 255.0))
+        )
+    , style "widht" (Debug.toString model.screenWidth ++ "px")
+    , style "height" (Debug.toString model.screenHeight ++ "px")
     , Mouse.onMove MouseMoved
     ]
     [ div [] [ text model.text ]
     , div [] [ text <| Debug.toString model.screenWidth ]
     , div [] [ text <| Debug.toString model.screenHeight ]
+    , div [] [ text <| Debug.toString model.mouseXPos ]
+    , div [] [ text <| Debug.toString model.mouseYPos ]
+    , div [] [ text <| Debug.toString (model.mouseXPos / model.screenWidth * 255.0) ]
     ]
 
 main : Program () Model Msg
