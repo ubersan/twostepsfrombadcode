@@ -93,7 +93,7 @@ view model =
     ]
     [
       button
-        [ class "myButton center"
+        [ class "fullscreenButton center"
         , onClick ToggleFullscreen ]
         [ text "Fullscreen" ]
     ]
