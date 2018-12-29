@@ -44,10 +44,8 @@ function toggleFullScreen(elem) {
 
 var app = Elm.Main.init({
   node: document.getElementById("elm-node")
-})
+});
 
 app.ports.toggleFullscreen.subscribe(function() {
   toggleFullScreen(document.body);
-})
-
-
+});
