@@ -22,6 +22,10 @@ body {
 	background-color:#5cbf2a;
 }
 
+.myButton:focus {
+	outline:none
+}
+
 .center {
   margin: 0;
   position: absolute;
