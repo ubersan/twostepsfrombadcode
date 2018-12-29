@@ -1,4 +1,4 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser
 import Browser.Dom exposing (getViewport)
@@ -6,9 +6,12 @@ import Browser.Events exposing (onResize)
 
 import Html exposing (Html, div, text, button)
 import Html.Attributes exposing (style, class)
+import Html.Events exposing (onClick)
 import Html.Events.Extra.Mouse as Mouse
 
 import Task
+
+port toggleFullscreen : () -> Cmd msg
 
 type alias Color =
   { r: Int
@@ -28,6 +31,7 @@ type alias Model =
 type Msg
   = MouseMoved Mouse.Event
   | Resize Float Float
+  | ToggleFullscreen
 
 init : () -> (Model, Cmd Msg)
 init _ =
@@ -61,6 +65,9 @@ update msg model =
       , Cmd.none
       )
 
+    ToggleFullscreen ->
+      ( model, toggleFullscreen () )
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
   Sub.batch
@@ -86,9 +93,9 @@ view model =
     ]
     [
       button
-        [ class "myButton center" ]
+        [ class "myButton center"
+        , onClick ToggleFullscreen ]
         [ text "Fullscreen" ]
-      , div [] [ text (Debug.toString model.text) ]
     ]
 
 
