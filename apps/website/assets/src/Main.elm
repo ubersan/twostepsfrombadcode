@@ -5,7 +5,7 @@ import Browser.Dom exposing (getViewport)
 import Browser.Events exposing (onResize)
 
 import Html exposing (Html, div, text, button)
-import Html.Attributes exposing (style)
+import Html.Attributes exposing (style, class)
 import Html.Events.Extra.Mouse as Mouse
 
 import Task
@@ -29,7 +29,6 @@ type Msg
   = MouseMoved Mouse.Event
   | Resize Float Float
 
-
 init : () -> (Model, Cmd Msg)
 init _ =
   ({ color={r=100, b=100, g=100}
@@ -48,8 +47,8 @@ update msg model =
     MouseMoved event ->
       ( { model
           | text = Debug.toString event
-          , mouseXPos = Tuple.first event.offsetPos
-          , mouseYPos = Tuple.second event.offsetPos
+          , mouseXPos = Tuple.first event.pagePos
+          , mouseYPos = Tuple.second event.pagePos
         }
       , Cmd.none
       )
@@ -72,7 +71,9 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
   div
-    [ style "background-color" (
+    [ style
+        "background-color"
+        (
         "rgb("
           ++ (Debug.toString (model.mouseXPos / model.screenWidth * 255.0))
           ++ ", 255, "
@@ -80,15 +81,16 @@ view model =
         )
     , style "widht" (Debug.toString model.screenWidth ++ "px")
     , style "height" (Debug.toString model.screenHeight ++ "px")
+    , style "text-align" "center"
     , Mouse.onMove MouseMoved
     ]
-    [ div [] [ text model.text ]
-    , div [] [ text <| Debug.toString model.screenWidth ]
-    , div [] [ text <| Debug.toString model.screenHeight ]
-    , div [] [ text <| Debug.toString model.mouseXPos ]
-    , div [] [ text <| Debug.toString model.mouseYPos ]
-    , div [] [ text <| Debug.toString (model.mouseXPos / model.screenWidth * 255.0) ]
+    [
+      button
+        [ class "myButton center" ]
+        [ text "Fullscreen" ]
+      , div [] [ text (Debug.toString model.text) ]
     ]
+
 
 main : Program () Model Msg
 main =
