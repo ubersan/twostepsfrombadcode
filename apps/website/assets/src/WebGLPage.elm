@@ -43,15 +43,15 @@ update msg model =
 view : Model -> Html Msg
 view model =
   WebGL.toHtml
-    [ width 400
-    , height 400
+    [ width 800
+    , height 800
     , style "display" "block"
     ]
     [ WebGL.entity
-      vertexShader
-      fragmentShader
-      mesh
-      { perspective = perspective (model.currentTime / 1000) }
+        vertexShader
+        fragmentShader
+        mesh
+        { perspective = perspective (model.currentTime / 1000) }
     ]
 
 perspective : Float -> Mat4
