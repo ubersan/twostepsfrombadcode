@@ -14,14 +14,14 @@ import Task
 port toggleFullscreen : () -> Cmd msg
 
 type alias Color =
-  { r: Int
-  , g: Int
-  , b: Int
+  { r : Int
+  , g : Int
+  , b : Int
   }
 
 type alias Model = 
-  { color: Color
-  , text: String
+  { color : Color
+  , text : String
   , screenWidth : Float
   , screenHeight : Float
   , mouseXPos : Float
