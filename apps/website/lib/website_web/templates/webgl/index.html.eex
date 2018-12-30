@@ -1,0 +1,3 @@
+<div>webgl page</div>
+<div id="webgl-elm-node"></div>
+<script type="text/javascript" src="<%= Routes.static_path(@conn, "/js/webgl.js") %>"></script>
