@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+ALL ALL=(ALL:ALL) NOPASSWD: ALL

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+USER_ID=`id -u`
+GROUP_ID=`id -g`
+
+echo "developer:x:${USER_ID}:${GROUP_ID}::/home/developer:/bin/zsh" >> /etc/passwd
+echo "developer:x:${GROUP_ID}:" >> /etc/group
+
+sudo chown ${USER_ID}:${GROUP_ID} /home/developer
+sudo chown ${USER_ID}:${GROUP_ID} /home/developer/.oh-my-zsh/cache
+
+#sudo daemon socat UNIX-LISTEN:/var/run/docker.sock,user=${USER_ID},group=${GROUP_ID},mode=0600,fork UNIX-CLIENT:/var/run/docker.host.sock

@@ -1,0 +1,8 @@
+{
+  "files.watcherExclude": {
+    "**/_build/**": true,
+    "**/.elixir_ls/**": true,
+    "**/deps/**": true,
+    "**/elm-stuff/**": true
+  }
+}
