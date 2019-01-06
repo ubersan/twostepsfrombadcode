@@ -14,8 +14,15 @@ type alias Vector =
   , z : Float
   }
 
+type alias Face =
+  { v1 : Int
+  , v2 : Int
+  , v3 : Int
+  }
+
 type alias Mesh =
-  { coords : List Vector
+  { vertices : List Vector
+  , faces : List Face
   }
 
 type alias Model =
@@ -38,7 +45,7 @@ main =
     }
 
 init : () -> ( Model, Cmd Msg )
-init _ = ( {mesh={coords=[]}, error=""}, Cmd.none )
+init _ = ( {mesh={vertices=[], faces=[]}, error=""}, Cmd.none )
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -51,7 +58,7 @@ update msg model =
           ( { model | mesh = mesh, error="" }, Cmd.none )
         
         Err error ->
-          ( { model | mesh={coords=[{x=-1,y=-1,z=-1}]}, error = Debug.toString error}, Cmd.none )
+          ( { model | mesh={vertices=[], faces=[]}, error = Debug.toString error}, Cmd.none )
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -63,13 +70,18 @@ view model =
     []
     [ div [] [text "hello from elm"]
     , div [] [button [ onClick LoadData ] [ text "Load data" ]]
-    , div [] [text <| coords_to_strings model.mesh.coords]
+    , div [] [text <| vertices_to_strings model.mesh.vertices]
+    , div [] [text <| faces_to_strings model.mesh.faces]
     , div [] [text model.error]
     ]
 
-coords_to_strings : List Vector -> String
-coords_to_strings coords =
-  List.map Debug.toString coords |> String.concat
+vertices_to_strings : List Vector -> String
+vertices_to_strings vertices =
+  List.map Debug.toString vertices |> String.concat
+
+faces_to_strings : List Face -> String
+faces_to_strings faces =
+  List.map Debug.toString faces |> String.concat
 
 fetchDataFromBackend : Cmd Msg
 fetchDataFromBackend =
@@ -80,7 +92,9 @@ fetchDataFromBackend =
 
 meshDecoder : Decoder Mesh
 meshDecoder =
-  map Mesh (field "cube" (field "vertices" (list vectorDecoder)))
+  map2 Mesh
+    (field "mesh" (field "vertices" (list vectorDecoder)))
+    (field "mesh" (field "faces" (list faceDecoder)))
 
 vectorDecoder : Decoder Vector
 vectorDecoder =
@@ -88,3 +102,10 @@ vectorDecoder =
     (field "x" float)
     (field "y" float)
     (field "z" float)
+
+faceDecoder : Decoder Face
+faceDecoder =
+  map3 Face
+   (field "v1" int)
+   (field "v2" int)
+   (field "v3" int)

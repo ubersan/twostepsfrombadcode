@@ -13,11 +13,23 @@ defmodule WebsiteWeb.CubeController do
       |> Enum.filter(fn line -> String.starts_with?(line, "v ") end)
       |> Enum.map(fn line -> extract_vertices(line) end)
 
-    json conn, %{"cube" => %{"vertices" => vertices}}
+    faces =
+      body
+      |> to_string
+      |> String.split("\n")
+      |> Enum.filter(fn line -> String.starts_with?(line, "f ") end)
+      |> Enum.map(fn line -> extract_face(line) end)
+
+    json conn, %{"mesh" => %{"vertices" => vertices, "faces" => faces}}
   end
 
   def extract_vertices(line) do
     [_v, x, y, z] = String.split(line, " ")
     %{"x" => String.to_float(x), "y" => String.to_float(y), "z" => String.to_float(z)}
+  end
+
+  def extract_face(line) do
+    [_f, v1, v2, v3] = String.split(line, " ")
+    %{"v1" => String.to_integer(v1), "v2" => String.to_integer(v2), "v3" => String.to_integer(v3)}
   end
 end
