@@ -22,8 +22,9 @@ defmodule WebsiteWeb.Router do
     get "/webgl", WebglController, :index
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", WebsiteWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", WebsiteWeb do
+    pipe_through :api
+
+    get "/cube", CubeController, :index
+  end
 end
