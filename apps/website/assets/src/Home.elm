@@ -8,11 +8,6 @@ import Html.Attributes exposing (style)
 import Http
 import Json.Decode exposing (Decoder, map, map2, map3, field, string, int, list, float)
 
-type alias User =
-  { id : Int
-  , name : String
-  }
-
 type alias Vector =
   { x : Float
   , y : Float
@@ -83,13 +78,9 @@ fetchDataFromBackend =
   , expect = Http.expectJson GotData meshDecoder
   }
 
-jsonDecoder : Decoder User
-jsonDecoder =
-  field "user" (map2 User (field "id" int) (field "name" string))
-
 meshDecoder : Decoder Mesh
 meshDecoder =
-  map Mesh (field "cube" (list vectorDecoder))
+  map Mesh (field "cube" (field "vertices" (list vectorDecoder)))
 
 vectorDecoder : Decoder Vector
 vectorDecoder =
