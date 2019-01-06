@@ -6,19 +6,31 @@ import Html exposing (Html, div, text, button)
 import Html.Events exposing (onClick)
 import Html.Attributes exposing (style)
 import Http
-import Json.Decode exposing (Decoder, map2, field, string, int)
+import Json.Decode exposing (Decoder, map, map2, map3, field, string, int, list, float)
 
 type alias User =
   { id : Int
   , name : String
   }
 
+type alias Vector =
+  { x : Float
+  , y : Float
+  , z : Float
+  }
+
+type alias Mesh =
+  { coords : List Vector
+  }
+
 type alias Model =
-  { user: User }
+  { mesh: Mesh
+  , error : String
+  }
 
 type Msg
   = LoadData
-  | GotData ( Result Http.Error User )
+  | GotData ( Result Http.Error Mesh )
 
 
 main : Program () Model Msg
@@ -31,7 +43,7 @@ main =
     }
 
 init : () -> ( Model, Cmd Msg )
-init _ = ( {user={id=0, name="default"}}, Cmd.none )
+init _ = ( {mesh={coords=[]}, error=""}, Cmd.none )
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -40,11 +52,11 @@ update msg model =
 
     GotData result ->
       case result of
-        Ok user ->
-          ( { model | user = user }, Cmd.none )
+        Ok mesh ->
+          ( { model | mesh = mesh, error="" }, Cmd.none )
         
         Err error ->
-          ( { model | user={name=Debug.toString error, id=-1 } }, Cmd.none )
+          ( { model | mesh={coords=[{x=-1,y=-1,z=-1}]}, error = Debug.toString error}, Cmd.none )
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -56,17 +68,32 @@ view model =
     []
     [ div [] [text "hello from elm"]
     , div [] [button [ onClick LoadData ] [ text "Load data" ]]
-    , div [] [text <| String.fromInt model.user.id]
-    , div [] [text model.user.name]
+    , div [] [text <| coords_to_strings model.mesh.coords]
+    , div [] [text model.error]
     ]
+
+coords_to_strings : List Vector -> String
+coords_to_strings coords =
+  List.map Debug.toString coords |> String.concat
 
 fetchDataFromBackend : Cmd Msg
 fetchDataFromBackend =
   Http.get
   { url = "/api/cube"
-  , expect = Http.expectJson GotData jsonDecoder
+  , expect = Http.expectJson GotData meshDecoder
   }
 
 jsonDecoder : Decoder User
 jsonDecoder =
   field "user" (map2 User (field "id" int) (field "name" string))
+
+meshDecoder : Decoder Mesh
+meshDecoder =
+  map Mesh (field "cube" (list vectorDecoder))
+
+vectorDecoder : Decoder Vector
+vectorDecoder =
+  map3 Vector
+    (field "x" float)
+    (field "y" float)
+    (field "z" float)
