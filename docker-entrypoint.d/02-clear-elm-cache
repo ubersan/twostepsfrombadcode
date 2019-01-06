@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+rm -rf apps/website/assets/elm-stuff
