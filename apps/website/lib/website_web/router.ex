@@ -26,5 +26,6 @@ defmodule WebsiteWeb.Router do
     pipe_through :api
 
     get "/cube", CubeController, :index
+    get "/mesh/:mesh_name", MeshController, :index
   end
 end

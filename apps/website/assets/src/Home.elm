@@ -91,11 +91,7 @@ view : Model -> Html Msg
 view model =
   div
     []
-    [ div [] [text "hello from elm"]
-    , div [] [button [ onClick LoadData ] [ text "Load data" ]]
-    , div [] [text <| vertices_to_strings model.mesh.vertices]
-    , div [] [text <| faces_to_strings model.mesh.faces]
-    , div [] [text <| triangles_to_strings model.mesh.triangles]
+    [ div [] [button [ onClick LoadData ] [ text "Load data" ]]
     , div [] [text model.error]
     , WebGL.toHtml
       [ width 800
@@ -131,7 +127,7 @@ triangles_to_strings triangles =
 fetchDataFromBackend : Cmd Msg
 fetchDataFromBackend =
   Http.get
-  { url = "/api/cube"
+  { url = "/api/mesh/cube"
   , expect = Http.expectJson GotData meshDecoder
   }
 
