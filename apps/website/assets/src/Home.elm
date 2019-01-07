@@ -7,7 +7,7 @@ import Html exposing (Html, div, text, button)
 import Html.Events exposing (onClick)
 import Html.Attributes exposing (style, width, height)
 import Http
-import Json.Decode exposing (Decoder, map, map2, map3, field, string, int, list, float)
+import Json.Decode exposing (Decoder, map, map2, map3, map6, field, string, int, list, float)
 import WebGL exposing (Mesh, Shader)
 import Math.Matrix4 as Mat4 exposing (Mat4)
 import Math.Vector3 as Vec3 exposing (vec3, Vec3)
@@ -16,6 +16,9 @@ type alias Vector =
   { x : Float
   , y : Float
   , z : Float
+  , nx : Float
+  , ny : Float
+  , nz : Float
   }
 
 type alias Face =
@@ -31,9 +34,7 @@ type alias Triangle =
   }
 
 type alias MyMesh =
-  { vertices : List Vector
-  , faces : List Face
-  , triangles : List Triangle
+  { triangles : List Triangle
   }
 
 type alias Model =
@@ -45,6 +46,7 @@ type alias Model =
 type alias Vertex =
   { position : Vec3
   , color : Vec3
+  , normal : Vec3
   }
 
 type Msg
@@ -63,7 +65,7 @@ main =
     }
 
 init : () -> ( Model, Cmd Msg )
-init _ = ( {mesh={vertices=[], faces=[], triangles=[]}, error="", currentTime=0}, Cmd.none )
+init _ = ( {mesh={triangles=[]}, error="", currentTime=0}, Cmd.none )
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -76,7 +78,7 @@ update msg model =
           ( { model | mesh = mesh, error="" }, Cmd.none )
         
         Err error ->
-          ( { model | mesh={vertices=[], faces=[], triangles=[]}, error = Debug.toString error}, Cmd.none )
+          ( { model | mesh={triangles=[]}, error = Debug.toString error}, Cmd.none )
     
     Tick delta ->
       ( { model | currentTime = model.currentTime + delta }
@@ -112,18 +114,6 @@ perspective t =
     (Mat4.makePerspective 45 1 0.01 100)
     (Mat4.makeLookAt (vec3 (4 * cos t) 0 (4 * sin t)) (vec3 0 0 0) (vec3 0 1 0))
 
-vertices_to_strings : List Vector -> String
-vertices_to_strings vertices =
-  List.map Debug.toString vertices |> String.concat
-
-faces_to_strings : List Face -> String
-faces_to_strings faces =
-  List.map Debug.toString faces |> String.concat
-
-triangles_to_strings : List Triangle -> String
-triangles_to_strings triangles =
-  List.map Debug.toString triangles |> String.concat
-
 fetchDataFromBackend : Cmd Msg
 fetchDataFromBackend =
   Http.get
@@ -133,17 +123,17 @@ fetchDataFromBackend =
 
 meshDecoder : Decoder MyMesh
 meshDecoder =
-  map3 MyMesh
-    (field "mesh" (field "vertices" (list vectorDecoder)))
-    (field "mesh" (field "faces" (list faceDecoder)))
-    (field "mesh" (field "triangles" (list triangleDecoder)))
+  map MyMesh (field "mesh" (field "triangles" (list triangleDecoder)))
 
 vectorDecoder : Decoder Vector
 vectorDecoder =
-  map3 Vector
+  map6 Vector
     (field "x" float)
     (field "y" float)
     (field "z" float)
+    (field "nx" float)
+    (field "ny" float)
+    (field "nz" float)
 
 faceDecoder : Decoder Face
 faceDecoder =
@@ -169,9 +159,9 @@ triangles_to_mesh triangles =
 
 triangle_to_vertices : Triangle -> (Vertex, Vertex, Vertex)
 triangle_to_vertices triangle =
-  ( Vertex (vec3 triangle.v1.x triangle.v1.y triangle.v1.z) mesh_color
-  , Vertex (vec3 triangle.v2.x triangle.v2.y triangle.v2.z) mesh_color
-  , Vertex (vec3 triangle.v3.x triangle.v3.y triangle.v3.z) mesh_color
+  ( Vertex (vec3 triangle.v1.x triangle.v1.y triangle.v1.z) mesh_color (vec3 triangle.v1.nx triangle.v1.ny triangle.v1.nz)
+  , Vertex (vec3 triangle.v2.x triangle.v2.y triangle.v2.z) mesh_color (vec3 triangle.v2.nx triangle.v2.ny triangle.v2.nz)
+  , Vertex (vec3 triangle.v3.x triangle.v3.y triangle.v3.z) mesh_color (vec3 triangle.v3.nx triangle.v3.ny triangle.v3.nz)
   )
 
 mesh_color : Vec3
