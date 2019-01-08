@@ -3,9 +3,9 @@ module Home exposing (main)
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta)
 
-import Html exposing (Html, div, text, button)
-import Html.Events exposing (onClick)
-import Html.Attributes exposing (style, width, height)
+import Html exposing (Html, div, text, button, input)
+import Html.Events exposing (onClick, onInput)
+import Html.Attributes exposing (style, width, height, type_, min, max, step, value)
 import Http
 import Json.Decode exposing (Decoder, map, map2, map3, map6, field, string, int, list, float)
 import WebGL exposing (Mesh, Shader)
@@ -40,6 +40,7 @@ type alias MyMesh =
 type alias Model =
   { mesh: MyMesh
   , currentTime : Float
+  , rotation_speed : Float
   , error : String
   }
 
@@ -53,6 +54,7 @@ type Msg
   = LoadData
   | GotData ( Result Http.Error MyMesh )
   | Tick Float
+  | RotationSpeedChange String
 
 
 main : Program () Model Msg
@@ -65,7 +67,7 @@ main =
     }
 
 init : () -> ( Model, Cmd Msg )
-init _ = ( {mesh={triangles=[]}, error="", currentTime=0}, Cmd.none )
+init _ = ( {mesh={triangles=[]}, error="", currentTime=0, rotation_speed=0.5}, Cmd.none )
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -81,7 +83,16 @@ update msg model =
           ( { model | mesh={triangles=[]}, error = Debug.toString error}, Cmd.none )
     
     Tick delta ->
-      ( { model | currentTime = model.currentTime + delta }
+      ( { model | currentTime = model.currentTime + (delta / 5000 * model.rotation_speed) }
+      , Cmd.none
+      )
+
+    RotationSpeedChange rotation_speed ->
+      ( { model | rotation_speed =
+            case String.toFloat rotation_speed of
+              Just f -> f
+              Nothing -> 0.5
+        }
       , Cmd.none
       )
 
@@ -93,8 +104,14 @@ view : Model -> Html Msg
 view model =
   div
     []
-    [ div [] [button [ onClick LoadData ] [ text "Load data" ]]
-    , div [] [text model.error]
+    [ div [] [ button [ onClick LoadData ] [ text "Load data" ] ]
+    , div
+      []
+      [ text "Rotation speed"
+      , input [ type_ "range", min "0", max "1", step "0.01", value (String.fromFloat model.rotation_speed), onInput RotationSpeedChange ] [ text "Slider" ]
+      ]
+    , div [] [ text <| String.fromFloat model.rotation_speed ]
+    , div [] [ text model.error ]
     , WebGL.toHtml
       [ width 800
       , height 800
@@ -104,15 +121,19 @@ view model =
           vertexShader
           fragmentShader
           (update_mesh model)
-          { perspective = perspective (model.currentTime / 1000) }
+          (uniforms model.currentTime)
       ]
     ]
 
-perspective : Float -> Mat4
-perspective t =
-  Mat4.mul
-    (Mat4.makePerspective 45 1 0.01 100)
-    (Mat4.makeLookAt (vec3 (4 * cos t) 2 (4 * sin t)) (vec3 0 0 0) (vec3 0 1 0))
+uniforms : Float -> Uniforms
+uniforms currentTime =
+  { rotation =
+      Mat4.mul
+        (Mat4.makeRotate (3 * currentTime ) (vec3 0 1 0))
+        (Mat4.makeRotate (2 * currentTime) (vec3 1 0 0))
+  , perspective = Mat4.makePerspective 45 1 0.01 100
+  , camera = Mat4.makeLookAt (vec3 0 0 5) (vec3 0 0 0) (vec3 0 1 0)
+  }
 
 fetchDataFromBackend : Cmd Msg
 fetchDataFromBackend =
@@ -168,20 +189,26 @@ mesh_color : Vec3
 mesh_color = vec3 0.8 0.8 0.8
 
 type alias Uniforms =
-  { perspective : Mat4 }
+  { rotation : Mat4
+  , perspective : Mat4
+  , camera : Mat4
+  }
 
 vertexShader : Shader Vertex Uniforms { vcolor : Vec3 }
 vertexShader =
   [glsl|
     attribute vec3 position;
-    attribute vec3 color;
     attribute vec3 normal;
+    attribute vec3 color;
     uniform mat4 perspective;
+    uniform mat4 camera;
+    uniform mat4 rotation;
     varying vec3 vcolor;
     void main () {
-      vec3 light_dir = normalize(vec3(1, 0.7, 0.4));
-      gl_Position = perspective * vec4(position, 1.0);
-      vcolor = max(dot(normal, light_dir), 0.0) * color;
+      gl_Position = perspective * camera * rotation * vec4(position, 1.0);
+      
+      vec3 light_dir = normalize(vec3(1, 0.0, 0.0));
+      vcolor = max(dot((rotation * vec4(normal, 1.0)).xyz, light_dir), 0.0) * color;
     }
   |]
 
