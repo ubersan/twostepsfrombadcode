@@ -6,12 +6,14 @@ defmodule WebsiteWeb.MeshController do
     {:ok, {{'HTTP/1.1', 200, 'OK'}, _headers, body}} =
       :httpc.request(:get, {to_charlist("https://raw.githubusercontent.com/sandrohuber/twostepsfrombadcode/master/apps/website/assets/static/meshes/" <> mesh_name <> ".obj"), []}, [], [])
 
-    vertices =
+    raw_vertices =
       body
       |> to_string
       |> String.split("\n")
       |> Enum.filter(fn line -> String.starts_with?(line, "v ") end)
       |> Enum.map(fn line -> extract_vertices(line) end)
+    
+    vertices = centralices_vertices(raw_vertices)
 
     faces =
       body
@@ -30,6 +32,14 @@ defmodule WebsiteWeb.MeshController do
     triangles = Enum.map(faces, fn face -> map_face_to_vertex(face, vertices, normals) end)
 
     json conn, %{"mesh" => %{"triangles" => triangles}}
+  end
+
+  def centralices_vertices(vertices) do
+    number_of_vertices = Enum.count(vertices)
+    mu_x = Enum.sum(Enum.map(vertices, fn vertex -> vertex["x"] end)) / number_of_vertices
+    mu_y = Enum.sum(Enum.map(vertices, fn vertex -> vertex["y"] end)) / number_of_vertices
+    mu_z = Enum.sum(Enum.map(vertices, fn vertex -> vertex["z"] end)) / number_of_vertices
+    Enum.map(vertices, fn vertex -> %{"x" => vertex["x"] - mu_x, "y" => vertex["y"] - mu_y, "z" => vertex["z"] - mu_z} end)
   end
 
   def map_face_to_vertex(face, vertices, normals) do

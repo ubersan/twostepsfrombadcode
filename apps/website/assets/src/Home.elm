@@ -112,7 +112,7 @@ perspective : Float -> Mat4
 perspective t =
   Mat4.mul
     (Mat4.makePerspective 45 1 0.01 100)
-    (Mat4.makeLookAt (vec3 (4 * cos t) 0 (4 * sin t)) (vec3 0 0 0) (vec3 0 1 0))
+    (Mat4.makeLookAt (vec3 (4 * cos t) 2 (4 * sin t)) (vec3 0 0 0) (vec3 0 1 0))
 
 fetchDataFromBackend : Cmd Msg
 fetchDataFromBackend =
@@ -175,11 +175,13 @@ vertexShader =
   [glsl|
     attribute vec3 position;
     attribute vec3 color;
+    attribute vec3 normal;
     uniform mat4 perspective;
     varying vec3 vcolor;
     void main () {
+      vec3 light_dir = normalize(vec3(1, 0.7, 0.4));
       gl_Position = perspective * vec4(position, 1.0);
-      vcolor = color;
+      vcolor = max(dot(normal, light_dir), 0.0) * color;
     }
   |]
 
