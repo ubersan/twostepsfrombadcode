@@ -21,12 +21,6 @@ type alias Vector =
   , nz : Float
   }
 
-type alias Face =
-  { v1 : Int
-  , v2 : Int
-  , v3 : Int
-  }
-
 type alias Triangle =
   { v1 : Vector
   , v2 : Vector
@@ -98,7 +92,10 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-  onAnimationFrameDelta (\delta -> Tick delta)
+  if model.mesh.triangles /= [] then
+    onAnimationFrameDelta (\delta -> Tick delta)
+  else
+    Sub.none
 
 view : Model -> Html Msg
 view model =
@@ -155,13 +152,6 @@ vectorDecoder =
     (field "nx" float)
     (field "ny" float)
     (field "nz" float)
-
-faceDecoder : Decoder Face
-faceDecoder =
-  map3 Face
-   (field "v1" int)
-   (field "v2" int)
-   (field "v3" int)
 
 triangleDecoder : Decoder Triangle
 triangleDecoder =
