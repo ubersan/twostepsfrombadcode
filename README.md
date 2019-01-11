@@ -6,3 +6,4 @@
 
 # Production
 - Configure elm-webpack-loader with `debug: options.mode === "production"` and `optimize: true` to compile elm for production and remove all debug features.
+
