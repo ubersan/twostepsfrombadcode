@@ -5,4 +5,4 @@
 - Run `mix phx.server` to compile and run the website exposing port 4000 to the host.
 
 # Production
-- Configure elm-webpack-loader with `debug: options.mode === "development"` and `optimize: true` to compile elm for production and remove all debug features.
+- Configure elm-webpack-loader with `debug: options.mode === "production"` and `optimize: true` to compile elm for production and remove all debug features.
