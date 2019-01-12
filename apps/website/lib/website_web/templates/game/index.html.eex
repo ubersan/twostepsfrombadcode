@@ -1,0 +1,3 @@
+<div>game page</div>
+<div id="game-elm-node"></div>
+<script type="text/javascript" src="<%= Routes.static_path(@conn, "/js/game.js") %>"></script>

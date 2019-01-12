@@ -20,6 +20,7 @@ defmodule WebsiteWeb.Router do
     get "/home", HomeController, :index
     get "/test", TestController, :index
     get "/webgl", WebglController, :index
+    get "/game", GameController, :index
   end
 
   scope "/api", WebsiteWeb do
