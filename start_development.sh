@@ -6,7 +6,7 @@ mkdir -p ${HOME}/.docker ${HOME}/.ssh
 touch  ${HOME}/.gitconfig
 
 docker build \
-  . \
+  ./docker \
   -t ${CONTAINER_NAME}
 
 docker run -it \
