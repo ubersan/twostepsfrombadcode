@@ -45,6 +45,8 @@ RUN set -ex \
   && mkdir ${HOME}/.oh-my-zsh/custom/plugins/localalias \
   && ln -s /usr/share/localalias/localalias.zsh ${HOME}/.oh-my-zsh/custom/plugins/localalias/localalias.plugin.zsh
 
+RUN chmod 666 /etc/passwd /etc/group
+
 COPY /home ${HOME}/
 
 COPY /docker-entrypoint.d /etc/docker-entrypoint.d/
@@ -52,4 +54,3 @@ COPY /docker-entrypoint.d /etc/docker-entrypoint.d/
 COPY /sudoers.d /etc/sudoers.d/
 
 ENTRYPOINT ["/home/developer/docker-entrypoint.sh"]
-
