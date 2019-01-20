@@ -61,7 +61,7 @@ main =
     }
 
 init : () -> ( Model, Cmd Msg )
-init _ = ( {mesh={triangles=[]}, error="", currentTime=0, rotation_speed=0.5}, Cmd.none )
+init _ = ( {mesh={triangles=[]}, error="", currentTime=0, rotation_speed=0.5}, fetchDataFromBackend )
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -71,7 +71,7 @@ update msg model =
     GotData result ->
       case result of
         Ok mesh ->
-          ( { model | mesh = mesh, error="" }, Cmd.none )
+          ( { model | mesh = mesh, error="view = " ++ Debug.toString (uniforms 3) }, Cmd.none )
         
         Err error ->
           ( { model | mesh={triangles=[]}, error = Debug.toString error}, Cmd.none )
@@ -124,13 +124,26 @@ view model =
 
 uniforms : Float -> Uniforms
 uniforms currentTime =
-  { rotation =
-      Mat4.mul
-        (Mat4.makeRotate (3 * currentTime ) (vec3 0 1 0))
-        (Mat4.makeRotate (2 * currentTime) (vec3 1 0 0))
-  , perspective = Mat4.makePerspective 45 1 0.01 100
-  , camera = Mat4.makeLookAt (vec3 0 0 5) (vec3 0 0 0) (vec3 0 1 0)
+  { --rotation =
+    --  Mat4.mul
+    --    (Mat4.makeRotate (3 * currentTime ) (vec3 0 1 0))
+    --    (Mat4.makeRotate (2 * currentTime) (vec3 1 0 0))
+    model = model_matrix
+  , view = Mat4.makeLookAt view_pos (vec3 0 0 0) (vec3 0 1 0)
+  , projection = Mat4.makePerspective 45 1 0.01 100
+  , light_pos = vec3 0.0 0.0 2.0
+  , normal_matrix = Mat4.transpose <|
+      case Mat4.inverse(model_matrix) of
+        Just mat -> mat
+        Nothing -> Mat4.identity
+  , view_pos = view_pos
   }
+
+model_matrix : Mat4
+model_matrix = Mat4.identity
+
+view_pos : Vec3
+view_pos = vec3 2 0 5
 
 fetchDataFromBackend : Cmd Msg
 fetchDataFromBackend =
@@ -176,38 +189,79 @@ triangle_to_vertices triangle =
   )
 
 mesh_color : Vec3
-mesh_color = vec3 0.8 0.8 0.8
+mesh_color = vec3 1.0 0.0 0.0
 
 type alias Uniforms =
-  { rotation : Mat4
-  , perspective : Mat4
-  , camera : Mat4
+  { model : Mat4
+  , view : Mat4
+  , projection : Mat4
+  , light_pos : Vec3
+  , normal_matrix : Mat4
+  , view_pos : Vec3
   }
 
-vertexShader : Shader Vertex Uniforms { vcolor : Vec3 }
+type alias Varyings =
+  { vnormal : Vec3
+  , fragPos : Vec3
+  }
+
+vertexShader : Shader Vertex Uniforms Varyings
 vertexShader =
   [glsl|
+    precision mediump float;
+
     attribute vec3 position;
     attribute vec3 normal;
     attribute vec3 color;
-    uniform mat4 perspective;
-    uniform mat4 camera;
-    uniform mat4 rotation;
-    varying vec3 vcolor;
+
+    uniform mat4 model;
+    uniform mat4 view;
+    uniform mat4 projection;
+    uniform vec3 light_pos;
+    uniform mat4 normal_matrix;
+
+    varying vec3 vnormal;
+    varying vec3 fragPos;
+
     void main () {
-      gl_Position = perspective * camera * rotation * vec4(position, 1.0);
-      
-      vec3 light_dir = normalize(vec3(1, 0.0, 0.0));
-      vcolor = max(dot((rotation * vec4(normal, 1.0)).xyz, light_dir), 0.0) * color;
+      gl_Position = projection * view * model * vec4(position, 1.0);
+      fragPos = vec3(model * vec4(position, 1.0));
+
+      vnormal = mat3(normal_matrix) * normal;
     }
   |]
 
-fragmentShader : Shader {} Uniforms { vcolor : Vec3 }
+fragmentShader : Shader {} Uniforms Varyings
 fragmentShader =
   [glsl|
     precision mediump float;
-    varying vec3 vcolor;
+    varying vec3 vnormal;
+    varying vec3 fragPos;
+
+    uniform vec3 light_pos;
+    uniform vec3 view_pos;
+
     void main () {
-      gl_FragColor = vec4(vcolor, 1.0);
+      vec3 lightColor = vec3(1.0, 1.0, 1.0);
+      vec3 objectColor = vec3(1.0, 0.5, 0.31);
+
+      float ambientStrength = 0.1;
+      vec3 ambient = ambientStrength * lightColor;
+
+      vec3 norm = normalize(vnormal);
+      vec3 lightDir = normalize(light_pos - fragPos);
+
+      float diff = max(dot(norm, lightDir), 0.0);      
+      vec3 diffuse = diff * lightColor;
+
+      float specularStrength = 0.5;
+      vec3 viewDir = normalize(view_pos - fragPos);
+      vec3 reflectDir = reflect(-lightDir, norm);
+
+      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+      vec3 specular = specularStrength * spec * lightColor;
+
+      vec3 result = (ambient + diffuse + specular) * objectColor;
+      gl_FragColor = vec4(result, 1.0);
     }
   |]
