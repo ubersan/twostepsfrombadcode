@@ -131,7 +131,7 @@ uniforms currentTime =
     model = model_matrix
   , view = Mat4.makeLookAt view_pos (vec3 0 0 0) (vec3 0 1 0)
   , projection = Mat4.makePerspective 45 1 0.01 100
-  , light_pos = vec3 0.0 0.0 2.0
+  , light_pos = vec3 1.5 0.0 2.0
   , normal_matrix = Mat4.transpose <|
       case Mat4.inverse(model_matrix) of
         Just mat -> mat
