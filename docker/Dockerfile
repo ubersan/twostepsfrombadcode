@@ -25,7 +25,6 @@ RUN set -xe \
 	&& apt-get install -y nano
 
 RUN set -ex \
-  && chmod 666 /etc/passwd /etc/group \
   && mkdir ${HOME} \
   && mkdir /work
 
