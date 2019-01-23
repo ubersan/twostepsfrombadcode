@@ -34,15 +34,7 @@ defmodule WebsiteWeb.MeshController do
 
   def centralices_vertices(vertices) do
     number_of_vertices = Enum.count(vertices)
-    tester =
-      (vertices
-      |> Enum.map(&Map.fetch!(&1, "z"))
-      |> Enum.sum
-      ) / number_of_vertices
-      
-
-    Logger.info inspect(tester)
-
+    
     mu_x = (vertices |> Enum.map(&Map.fetch!(&1, "x")) |> Enum.sum) / number_of_vertices
     mu_y = (vertices |> Enum.map(&Map.fetch!(&1, "y")) |> Enum.sum) / number_of_vertices
     mu_z = (vertices |> Enum.map(&Map.fetch!(&1, "z")) |> Enum.sum) / number_of_vertices
