@@ -131,7 +131,8 @@ uniforms currentTime =
     model = model_matrix
   , view = Mat4.makeLookAt view_pos (vec3 0 0 0) (vec3 0 1 0)
   , projection = Mat4.makePerspective 45 1 0.01 100
-  , light_pos = vec3 1.5 0.0 2.0
+  , light_position = vec3 1.5 0.0 2.0
+  , light_color = vec3 1.0 1.0 1.0
   , normal_matrix = Mat4.transpose <|
       case Mat4.inverse(model_matrix) of
         Just mat -> mat
@@ -189,20 +190,22 @@ triangle_to_vertices triangle =
   )
 
 mesh_color : Vec3
-mesh_color = vec3 1.0 0.0 0.0
+mesh_color = vec3 0.58 0.26 0.96
 
 type alias Uniforms =
   { model : Mat4
   , view : Mat4
   , projection : Mat4
-  , light_pos : Vec3
+  , light_position : Vec3
+  , light_color : Vec3
   , normal_matrix : Mat4
   , view_pos : Vec3
   }
 
 type alias Varyings =
   { vnormal : Vec3
-  , fragPos : Vec3
+  , fragment_position : Vec3
+  , vcolor : Vec3
   }
 
 vertexShader : Shader Vertex Uniforms Varyings
@@ -217,17 +220,18 @@ vertexShader =
     uniform mat4 model;
     uniform mat4 view;
     uniform mat4 projection;
-    uniform vec3 light_pos;
     uniform mat4 normal_matrix;
 
     varying vec3 vnormal;
-    varying vec3 fragPos;
+    varying vec3 fragment_position;
+    varying vec3 vcolor;
 
     void main () {
       gl_Position = projection * view * model * vec4(position, 1.0);
-      fragPos = vec3(model * vec4(position, 1.0));
+      fragment_position = vec3(model * vec4(position, 1.0));
 
       vnormal = mat3(normal_matrix) * normal;
+      vcolor = color;
     }
   |]
 
@@ -235,33 +239,32 @@ fragmentShader : Shader {} Uniforms Varyings
 fragmentShader =
   [glsl|
     precision mediump float;
-    varying vec3 vnormal;
-    varying vec3 fragPos;
 
-    uniform vec3 light_pos;
+    varying vec3 vnormal;
+    varying vec3 fragment_position;
+    varying vec3 vcolor;
+
+    uniform vec3 light_position;
+    uniform vec3 light_color;
     uniform vec3 view_pos;
 
     void main () {
-      vec3 lightColor = vec3(1.0, 1.0, 1.0);
-      vec3 objectColor = vec3(1.0, 0.5, 0.31);
+      vec3 normal = normalize(vnormal);
+      vec3 lightDir = normalize(light_position - fragment_position);
 
       float ambientStrength = 0.1;
-      vec3 ambient = ambientStrength * lightColor;
+      vec3 ambient = ambientStrength * light_color;
 
-      vec3 norm = normalize(vnormal);
-      vec3 lightDir = normalize(light_pos - fragPos);
-
-      float diff = max(dot(norm, lightDir), 0.0);      
-      vec3 diffuse = diff * lightColor;
+      float diffusePower = max(dot(normal, lightDir), 0.0);      
+      vec3 diffuse = diffusePower * light_color;
 
       float specularStrength = 0.5;
-      vec3 viewDir = normalize(view_pos - fragPos);
-      vec3 reflectDir = reflect(-lightDir, norm);
+      vec3 viewDir = normalize(view_pos - fragment_position);
+      vec3 reflectDir = reflect(-lightDir, normal);
+      float specularPower = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
+      vec3 specular = specularStrength * specularPower * light_color;
 
-      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0);
-      vec3 specular = specularStrength * spec * lightColor;
-
-      vec3 result = (ambient + diffuse + specular) * objectColor;
+      vec3 result = (ambient + diffuse + specular) * vcolor;
       gl_FragColor = vec4(result, 1.0);
     }
   |]
