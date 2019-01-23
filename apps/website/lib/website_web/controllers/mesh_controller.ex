@@ -6,49 +6,58 @@ defmodule WebsiteWeb.MeshController do
     {:ok, {{'HTTP/1.1', 200, 'OK'}, _headers, body}} =
       :httpc.request(:get, {to_charlist("https://raw.githubusercontent.com/sandrohuber/twostepsfrombadcode/master/apps/website/assets/static/meshes/" <> mesh_name <> ".obj"), []}, [], [])
 
-    raw_vertices =
+    lines =
       body
       |> to_string
       |> String.split("\n")
-      |> Enum.filter(fn line -> String.starts_with?(line, "v ") end)
-      |> Enum.map(fn line -> extract_vertices(line) end)
+
+    raw_vertices =
+      lines
+      |> Enum.filter(&String.starts_with?(&1, "v "))
+      |> Enum.map(&extract_vertex/1)
     
     vertices = centralices_vertices(raw_vertices)
 
-    faces =
-      body
-      |> to_string
-      |> String.split("\n")
-      |> Enum.filter(fn line -> String.starts_with?(line, "f ") end)
-      |> Enum.map(fn line -> extract_face(line) end)
-
     normals =
-      body
-      |> to_string
-      |> String.split("\n")
-      |> Enum.filter(fn line -> String.starts_with?(line, "vn ") end)
-      |> Enum.map(fn line -> extract_normals(line) end)
+      lines
+      |> Enum.filter(&String.starts_with?(&1, "vn "))
+      |> Enum.map(&extract_normals/1)
 
-    triangles = Enum.map(faces, fn face -> map_face_to_vertex(face, vertices, normals) end)
+    triangles = 
+      lines
+      |> Enum.filter(&String.starts_with?(&1, "f "))
+      |> Enum.map(&extract_face/1)
+      |> Enum.map(&map_face_to_vertex(&1, vertices, normals))
 
     json conn, %{"mesh" => %{"triangles" => triangles}}
   end
 
   def centralices_vertices(vertices) do
     number_of_vertices = Enum.count(vertices)
-    mu_x = Enum.sum(Enum.map(vertices, fn vertex -> vertex["x"] end)) / number_of_vertices
-    mu_y = Enum.sum(Enum.map(vertices, fn vertex -> vertex["y"] end)) / number_of_vertices
-    mu_z = Enum.sum(Enum.map(vertices, fn vertex -> vertex["z"] end)) / number_of_vertices
-    Enum.map(vertices, fn vertex -> %{"x" => vertex["x"] - mu_x, "y" => vertex["y"] - mu_y, "z" => vertex["z"] - mu_z} end)
+    tester =
+      (vertices
+      |> Enum.map(&Map.fetch!(&1, "z"))
+      |> Enum.sum
+      ) / number_of_vertices
+      
+
+    Logger.info inspect(tester)
+
+    mu_x = (vertices |> Enum.map(&Map.fetch!(&1, "x")) |> Enum.sum) / number_of_vertices
+    mu_y = (vertices |> Enum.map(&Map.fetch!(&1, "y")) |> Enum.sum) / number_of_vertices
+    mu_z = (vertices |> Enum.map(&Map.fetch!(&1, "z")) |> Enum.sum) / number_of_vertices
+
+    vertices
+      |> Enum.map(fn vertex -> %{"x" => vertex["x"] - mu_x, "y" => vertex["y"] - mu_y, "z" => vertex["z"] - mu_z} end)
   end
 
   def map_face_to_vertex(face, vertices, normals) do
-    triangle = face |> Enum.map(fn f -> Enum.at(vertices, f["vertex"] - 1) end)
-    normal = face |> Enum.map(fn f -> Enum.at(normals, f["normal"] - 1) end)
+    triangle = face |> Enum.map(&Enum.at(vertices, &1["vertex"] - 1))
+    normal = face |> Enum.map(&Enum.at(normals, &1["normal"] - 1))
     Enum.reduce([1, 2, 3], %{}, fn x, acc -> Map.put(acc, "v" <> Integer.to_string(x), Map.merge(Enum.at(triangle, x - 1), Enum.at(normal, x - 1))) end)
   end
 
-  def extract_vertices(line) do
+  def extract_vertex(line) do
     [_v, x, y, z] = String.split(line, " ")
     %{"x" => String.to_float(x), "y" => String.to_float(y), "z" => String.to_float(z)}
   end
