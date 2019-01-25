@@ -61,7 +61,7 @@ main =
     }
 
 init : () -> ( Model, Cmd Msg )
-init _ = ( {mesh={triangles=[]}, error="", currentTime=0, rotation_speed=0.5}, fetchDataFromBackend )
+init _ = ( {mesh={triangles=[]}, error="", currentTime=0, rotation_speed=0.0}, fetchDataFromBackend )
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -71,7 +71,7 @@ update msg model =
     GotData result ->
       case result of
         Ok mesh ->
-          ( { model | mesh = mesh, error="view = " ++ Debug.toString (uniforms 3) }, Cmd.none )
+          ( { model | mesh = mesh, error="view = " ++ Debug.toString (uniforms model) }, Cmd.none )
         
         Err error ->
           ( { model | mesh={triangles=[]}, error = Debug.toString error}, Cmd.none )
@@ -118,33 +118,39 @@ view model =
           vertexShader
           fragmentShader
           (update_mesh model)
-          (uniforms model.currentTime)
+          (uniforms model (vec3 0 0 0))
+      , WebGL.entity
+          vertexShader
+          fragmentShader
+          (update_mesh model)
+          (uniforms model (vec3 4 0 0))
       ]
     ]
 
-uniforms : Float -> Uniforms
-uniforms currentTime =
-  { --rotation =
-    --  Mat4.mul
-    --    (Mat4.makeRotate (3 * currentTime ) (vec3 0 1 0))
-    --    (Mat4.makeRotate (2 * currentTime) (vec3 1 0 0))
-    model = model_matrix
-  , view = Mat4.makeLookAt view_pos (vec3 0 0 0) (vec3 0 1 0)
+uniforms : Model -> Vec3 -> Uniforms
+uniforms model offset =
+  { model = model_matrix model offset
+  , view = Mat4.makeLookAt view_pos (vec3 3 0 0) (vec3 0 1 0)
   , projection = Mat4.makePerspective 45 1 0.01 100
-  , light_position = vec3 1.5 0.0 2.0
+  , light_position = vec3 6.0 0.0 0.0
   , light_color = vec3 1.0 1.0 1.0
   , normal_matrix = Mat4.transpose <|
-      case Mat4.inverse(model_matrix) of
+      case Mat4.inverse(model_matrix model offset) of
         Just mat -> mat
         Nothing -> Mat4.identity
   , view_pos = view_pos
   }
 
-model_matrix : Mat4
-model_matrix = Mat4.identity
+model_matrix : Model -> Vec3-> Mat4
+model_matrix model offset =
+  Mat4.mul
+    (Mat4.makeTranslate offset)
+    <| Mat4.mul
+      (Mat4.makeRotate (3 * model.currentTime) (vec3 0 1 0))
+      (Mat4.makeRotate (2 * model.currentTime) (vec3 1 0 0))
 
 view_pos : Vec3
-view_pos = vec3 2 0 5
+view_pos = vec3 6 2 10
 
 fetchDataFromBackend : Cmd Msg
 fetchDataFromBackend =
